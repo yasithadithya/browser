@@ -1,16 +1,26 @@
 {
   "name": "my-browser",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "My custom browser",
+  "main": "main.js",
   "scripts": {
-  "start": "electron ."
-},
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "electron": "^41.2.1"
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^34.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.mybrowser.app",
+    "productName": "MyBrowser",
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
