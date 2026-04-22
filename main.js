@@ -9,12 +9,26 @@ app.userAgentFallback = CHROME_UA;
 
 let mainWindow;
 
+/**
+ * Send an IPC message from the main process to the renderer window.
+ *
+ * If a main window exists and is not destroyed, forwards `payload` on `channel` to its webContents; otherwise does nothing.
+ * @param {string} channel - The IPC channel name to send the message on.
+ * @param {*} payload - The value to send to the renderer.
+ */
 function sendToRenderer(channel, payload) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send(channel, payload);
   }
 }
 
+/**
+ * Registers a download handler on the given Electron session and forwards download lifecycle events to the renderer via the `download-event` channel.
+ *
+ * It emits an initial payload when a download starts and subsequent updates for progress and completion. Payload fields include `id`, `fileName`, `filePath`, `url`, `totalBytes`, `receivedBytes`, and `state`. When an update reports `state === 'progressing'` but the item is paused, `state` is normalized to `'paused'`.
+ *
+ * @param {Electron.Session} targetSession - The Electron session to attach the `will-download` listener to.
+ */
 function setupDownloads(targetSession) {
   targetSession.on('will-download', (event, item) => {
     const filePath = item.getSavePath();
@@ -50,6 +64,14 @@ function setupDownloads(targetSession) {
   });
 }
 
+/**
+ * Creates the main application window, configures the default session, and loads the UI.
+ *
+ * Creates a frameless BrowserWindow with a dark background, fixed minimum size, and web
+ * preferences that enable an isolated preload script and webviews. Sets the Chrome user
+ * agent on the default session, enables ad/redirect blocking and download handling for
+ * that session, prevents popups created by webview pages, and loads index.html into the window.
+ */
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
