@@ -2,387 +2,567 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MyBrowser</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg:        #0d0d14;
-      --surface:   #13131f;
-      --surface2:  #1a1a2e;
-      --surface3:  #22223a;
-      --border:    rgba(255,255,255,0.07);
-      --accent:    #6366f1;
-      --accent-glow: rgba(99,102,241,0.25);
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --secure:    #22c55e;
-      --warn:      #f59e0b;
-      --danger:    #ef4444;
-      --shield:    #818cf8;
-      --radius:    8px;
-      --tab-h:     36px;
-      --toolbar-h: 48px;
-      --bar-h:     3px;
+      --bg: #0b0f19;
+      --surface: #151b2b;
+      --surface-2: #1e2638;
+      --surface-3: #2a3447;
+      --surface-4: rgba(15, 23, 42, 0.6);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      --text: #f0f6fc;
+      --muted: #8b9eb7;
+      --accent: #007aff;
+      --accent-hover: #3395ff;
+      --accent-glow: rgba(0, 122, 255, 0.25);
+      --secure: #34c759;
+      --warn: #ffcc00;
+      --danger: #ff3b30;
+      --radius: 12px;
+      --tab-h: 42px;
+      --toolbar-h: 56px;
+      --bar-h: 3px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --glass-bg: rgba(21, 27, 43, 0.75);
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
 
     body {
-      display: flex;
-      flex-direction: column;
       height: 100vh;
       overflow: hidden;
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
       color: var(--text);
+      background: var(--bg);
       user-select: none;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* ── Titlebar ─────────────────────────────────────────────────────────── */
+    button, input {
+      font: inherit;
+      outline: none;
+    }
+
+    #titlebar, #tab-bar, #toolbar {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 10;
+    }
+
     #titlebar {
       display: flex;
       align-items: center;
-      height: 32px;
-      padding: 0 12px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      justify-content: space-between;
+      height: 38px;
+      padding: 0 16px;
       -webkit-app-region: drag;
-      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
     }
-    #titlebar .app-name {
-      font-size: 12px;
+
+    .app-name {
+      font-size: 13px;
       font-weight: 600;
-      color: var(--muted);
       letter-spacing: 0.05em;
-      text-transform: uppercase;
-      flex: 1;
+      color: var(--muted);
     }
+
     #shield-badge {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
       font-size: 12px;
       font-weight: 500;
-      color: var(--shield);
-      background: rgba(129,140,248,0.12);
-      padding: 2px 10px;
-      border-radius: 20px;
+      border: 1px solid var(--border);
       -webkit-app-region: no-drag;
-      transition: color 0.3s;
+      transition: all 0.2s ease;
     }
-    #shield-badge.active { color: var(--secure); background: rgba(34,197,94,0.12); }
+
+    #shield-badge.active {
+      color: var(--secure);
+      background: rgba(52, 199, 89, 0.1);
+      border-color: rgba(52, 199, 89, 0.2);
+    }
+
     #win-controls {
       display: flex;
-      gap: 6px;
-      margin-left: 12px;
+      gap: 8px;
       -webkit-app-region: no-drag;
     }
+
     .win-btn {
-      width: 13px; height: 13px;
-      border-radius: 50%;
+      width: 12px;
+      height: 12px;
       border: none;
+      border-radius: 50%;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: all 0.2s ease;
     }
-    .win-btn:hover { opacity: 0.8; }
-    #btn-close    { background: #ff5f56; }
+
+    .win-btn:hover { transform: scale(1.15); }
+    #btn-close { background: #ff5f56; }
     #btn-minimize { background: #febc2e; }
     #btn-maximize { background: #28c840; }
 
-    /* ── Tab Bar ──────────────────────────────────────────────────────────── */
     #tab-bar {
       display: flex;
-      align-items: center;
-      height: var(--tab-h);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 8px;
+      align-items: flex-end;
       gap: 4px;
+      height: var(--tab-h);
+      padding: 0 12px;
       overflow-x: auto;
       flex-shrink: 0;
     }
-    #tab-bar::-webkit-scrollbar { height: 3px; }
-    #tab-bar::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+    #tab-bar::-webkit-scrollbar { display: none; }
 
     .tab {
+      flex-shrink: 0;
+      max-width: 240px;
+      min-width: 120px;
       display: flex;
       align-items: center;
-      gap: 7px;
-      height: 26px;
-      padding: 0 10px 0 12px;
-      border-radius: 6px;
-      background: transparent;
-      border: 1px solid transparent;
+      gap: 8px;
+      height: 34px;
+      padding: 0 10px 0 14px;
+      border-radius: 10px 10px 0 0;
+      background: rgba(255, 255, 255, 0.03);
       color: var(--muted);
-      font-size: 12px;
-      font-family: 'Inter', sans-serif;
       cursor: pointer;
-      white-space: nowrap;
-      max-width: 180px;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-      flex-shrink: 0;
+      position: relative;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      border-bottom: none;
     }
-    .tab:hover { background: var(--surface2); color: var(--text); }
-    .tab.active {
-      background: var(--surface3);
-      border-color: var(--border);
+
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.07);
       color: var(--text);
     }
-    .tab .tab-title {
+
+    .tab.active {
+      color: var(--text);
+      background: var(--surface-2);
+      border-color: var(--border);
+      font-weight: 500;
+    }
+
+    .tab.active::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: -1px; right: -1px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 10px 10px 0 0;
+    }
+
+    .tab-favicon { width: 16px; height: 16px; border-radius: 4px; }
+    .tab-title {
+      flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
-      flex: 1;
-    }
-    .tab .tab-close {
-      width: 16px; height: 16px;
-      border-radius: 4px;
-      border: none;
-      background: transparent;
-      color: var(--muted);
+      white-space: nowrap;
       font-size: 13px;
-      line-height: 1;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      transition: background 0.15s, color 0.15s;
     }
-    .tab .tab-close:hover { background: rgba(239,68,68,0.2); color: var(--danger); }
-    .tab .tab-favicon { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+
+    .tab-close {
+      width: 20px;
+      height: 20px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      opacity: 0;
+      transition: all 0.2s;
+    }
+
+    .tab:hover .tab-close, .tab.active .tab-close { opacity: 0.6; }
+    .tab-close:hover {
+      opacity: 1 !important;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--danger);
+    }
 
     #new-tab-btn {
-      width: 26px; height: 26px;
+      width: 28px;
+      height: 28px;
+      margin-bottom: 3px;
+      margin-left: 4px;
+      border: none;
       border-radius: 6px;
-      border: 1px solid var(--border);
       background: transparent;
       color: var(--muted);
-      font-size: 18px;
-      line-height: 1;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, color 0.15s;
-      flex-shrink: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
     }
-    #new-tab-btn:hover { background: var(--surface2); color: var(--text); }
 
-    /* ── Toolbar ──────────────────────────────────────────────────────────── */
+    #new-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text);
+    }
+
     #toolbar {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 12px;
       height: var(--toolbar-h);
-      padding: 0 12px;
-      background: var(--surface);
+      padding: 0 16px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    .nav-btn {
-      width: 32px; height: 32px;
-      border-radius: var(--radius);
+
+    .nav-btn, .tool-btn {
+      height: 36px;
       border: none;
+      border-radius: 8px;
       background: transparent;
       color: var(--muted);
-      font-size: 16px;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, color 0.15s;
-      flex-shrink: 0;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
     }
-    .nav-btn:hover { background: var(--surface2); color: var(--text); }
-    .nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+    .nav-btn { width: 36px; font-size: 16px; }
+    .tool-btn { padding: 0 16px; font-size: 13px; gap: 6px; }
+
+    .nav-btn:hover:not(:disabled), .tool-btn:hover, .tool-btn.active {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    #btn-bookmark.active { color: var(--accent); }
 
     #url-wrapper {
       flex: 1;
       display: flex;
       align-items: center;
-      gap: 8px;
-      height: 34px;
-      padding: 0 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
+      gap: 12px;
+      height: 40px;
+      padding: 0 16px;
       border-radius: 20px;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
     }
+
     #url-wrapper:focus-within {
       border-color: var(--accent);
+      background: rgba(0, 0, 0, 0.3);
       box-shadow: 0 0 0 3px var(--accent-glow);
     }
-    #security-icon { font-size: 13px; flex-shrink: 0; }
-    #url-bar {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-size: 13px;
-      font-family: 'Inter', sans-serif;
+
+    #security-icon {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
-    #url-bar::placeholder { color: var(--muted); }
+
+    #url-bar, #newtab-search {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    #url-bar::placeholder, #newtab-search::placeholder { color: rgba(255, 255, 255, 0.3); }
+
     #loading-spinner {
-      width: 14px; height: 14px;
-      border: 2px solid var(--border);
+      width: 16px; height: 16px;
+      display: none;
+      border: 2px solid rgba(255, 255, 255, 0.1);
       border-top-color: var(--accent);
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: none;
-      flex-shrink: 0;
+      animation: spin 0.8s linear infinite;
     }
     #loading-spinner.visible { display: block; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Loading Progress Bar ─────────────────────────────────────────────── */
     #progress-bar {
-      height: var(--bar-h);
-      background: linear-gradient(90deg, var(--accent), #a78bfa);
-      width: 0%;
-      transition: width 0.3s ease, opacity 0.4s;
+      width: 0%; height: var(--bar-h);
       opacity: 0;
-      flex-shrink: 0;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      transition: width 0.3s ease, opacity 0.3s ease;
+      position: absolute; top: calc(38px + var(--tab-h) + var(--toolbar-h)); left: 0; z-index: 20;
     }
     #progress-bar.loading { opacity: 1; }
 
-    /* ── Webview Container ────────────────────────────────────────────────── */
     #webviews {
-      flex: 1;
       position: relative;
+      flex: 1;
       overflow: hidden;
-      background: #fff;
+      background: #ffffff; /* Web pages default to white background */
     }
-    webview {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: none;
-      border: none;
-    }
-    webview.active { display: flex; }
 
-    /* ── New-Tab Page ─────────────────────────────────────────────────────── */
+    webview {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border: none; display: none;
+    }
+
     #newtab-page {
-      position: absolute;
-      inset: 0;
-      background: var(--bg);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
+      position: absolute; inset: 0;
+      display: none; align-items: center; justify-content: center;
+      padding: 40px;
+      background: radial-gradient(circle at top right, rgba(0, 122, 255, 0.1), transparent 40%), var(--bg);
     }
     #newtab-page.active { display: flex; }
-    #newtab-logo {
-      font-size: 42px;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -0.02em;
+
+    .newtab-shell {
+      width: 100%; max-width: 900px;
+      display: grid; grid-template-columns: 1.5fr 1fr;
+      gap: 30px;
     }
-    #newtab-search-wrap {
-      display: flex;
-      align-items: center;
-      width: 520px;
-      max-width: 90vw;
-      height: 48px;
-      background: var(--surface2);
+
+    .hero-card, .status-card, .side-panel {
+      background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 0 20px;
-      gap: 10px;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card { display: flex; flex-direction: column; gap: 24px; }
+    
+    .eyebrow {
+      font-size: 13px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--accent);
+    }
+
+    #newtab-logo { font-size: 48px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+    .hero-copy { color: var(--muted); font-size: 16px; line-height: 1.6; }
+
+    #newtab-search-wrap {
+      display: flex; align-items: center; gap: 14px;
+      height: 56px; padding: 0 20px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border);
+      transition: all 0.2s;
     }
     #newtab-search-wrap:focus-within {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-glow);
+      border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); background: rgba(0, 0, 0, 0.4);
     }
-    #newtab-search { font-size: 15px; }
-    #newtab-search::placeholder { color: var(--muted); }
-    #newtab-search-wrap svg { flex-shrink: 0; color: var(--muted); }
-    #newtab-shortcuts {
-      display: flex;
-      gap: 14px;
+    .search-icon {
+      font-size: 20px; color: var(--muted);
     }
+
+    #shortcut-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 16px;
+      margin-top: 10px;
+    }
+
     .shortcut-tile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 18px;
-      border-radius: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, transform 0.15s;
-      min-width: 80px;
-      font-size: 12px;
-      color: var(--muted);
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      padding: 16px 12px;
+      border-radius: 16px; border: 1px solid transparent;
+      background: transparent; color: var(--text);
+      cursor: pointer; transition: all 0.2s;
     }
-    .shortcut-tile:hover { background: var(--surface2); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
-    .shortcut-tile .icon { font-size: 22px; }
-    #newtab-stats {
-      font-size: 13px;
-      color: var(--muted);
-      display: flex;
-      gap: 6px;
-      align-items: center;
+    .shortcut-tile:hover {
+      background: rgba(255, 255, 255, 0.05); border-color: var(--border-hover);
+      transform: translateY(-2px);
     }
-    #newtab-stats span { color: var(--shield); font-weight: 600; }
+    
+    .shortcut-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface-2); font-size: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .shortcut-label { font-size: 13px; font-weight: 500; text-align: center; }
+
+    .status-card { display: flex; flex-direction: column; gap: 24px; }
+    .status-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .status-copy { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    
+    .metric { margin: 16px 0; }
+    .metric-value { font-size: 48px; font-weight: 700; color: var(--text); }
+    .metric-label { display: block; color: var(--accent); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+    
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 16px; border-top: 1px solid var(--border); font-size: 14px;
+    }
+    .info-row strong { color: var(--text); }
+
+    #side-panels {
+      position: absolute; top: 16px; right: 16px; bottom: 16px;
+      width: 380px; pointer-events: none; z-index: 100;
+    }
+    #side-panels.active { pointer-events: auto; }
+
+    .side-panel {
+      position: absolute; inset: 0; display: none; flex-direction: column; gap: 20px;
+      padding: 24px; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .side-panel.active { display: flex; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+    .panel-top { display: flex; justify-content: space-between; align-items: center; }
+    .panel-top h2 { font-size: 20px; font-weight: 600; }
+    
+    .panel-clear {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer;
+      font-size: 13px; font-weight: 500; transition: all 0.2s;
+    }
+    .panel-clear:hover { background: rgba(255, 255, 255, 0.1); color: var(--text); }
+
+    .panel-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 8px; }
+    .panel-list::-webkit-scrollbar { width: 6px; }
+    .panel-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .panel-item, .download-card {
+      padding: 16px; border-radius: 12px;
+      background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .panel-item:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--border-hover); }
+    
+    .panel-item-title, .download-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; display: block; }
+    .panel-item-meta, .download-meta { font-size: 12px; color: var(--muted); }
+
+    .download-card { display: flex; flex-direction: column; gap: 12px; }
+    .download-header { display: flex; justify-content: space-between; align-items: center; }
+    .download-progress-track { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+    .download-progress-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
+
+    @media (max-width: 900px) {
+      .newtab-shell { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-
-  <!-- Titlebar -->
   <div id="titlebar">
-    <div class="app-name">⚡ MyBrowser</div>
-    <div id="shield-badge">🛡 <span id="blocked-count">0</span> blocked</div>
+    <div class="app-name">MyBrowser</div>
+    <div id="shield-badge">Shield <span id="blocked-count">0</span> blocked</div>
     <div id="win-controls">
       <button class="win-btn" id="btn-minimize" title="Minimize"></button>
       <button class="win-btn" id="btn-maximize" title="Maximize"></button>
-      <button class="win-btn" id="btn-close"    title="Close"></button>
+      <button class="win-btn" id="btn-close" title="Close"></button>
     </div>
   </div>
 
-  <!-- Tab Bar -->
   <div id="tab-bar">
-    <button id="new-tab-btn" title="New Tab (Ctrl+T)">+</button>
+    <button id="new-tab-btn" title="New tab (Ctrl+T)">+</button>
   </div>
 
-  <!-- Toolbar -->
   <div id="toolbar">
-    <button class="nav-btn" id="btn-back"    title="Back (Alt+Left)">&#8592;</button>
+    <button class="nav-btn" id="btn-back" title="Back (Alt+Left)">&#8592;</button>
     <button class="nav-btn" id="btn-forward" title="Forward (Alt+Right)">&#8594;</button>
-    <button class="nav-btn" id="btn-reload"  title="Reload (Ctrl+R)">&#8635;</button>
-    <button class="nav-btn" id="btn-home"    title="Home">⌂</button>
+    <button class="nav-btn" id="btn-reload" title="Reload (Ctrl+R)">&#8635;</button>
+    <button class="nav-btn" id="btn-home" title="Home">&#8962;</button>
 
     <div id="url-wrapper">
-      <span id="security-icon">🌐</span>
-      <input id="url-bar" type="text" placeholder="Search Google or enter URL  (Ctrl+L)" autocomplete="off" spellcheck="false"/>
+      <span id="security-icon">Site</span>
+      <input id="url-bar" type="text" placeholder="Search or enter a URL (Ctrl+L)" autocomplete="off" spellcheck="false" />
       <div id="loading-spinner"></div>
     </div>
+
+    <button class="tool-btn" id="btn-bookmark" title="Save page (Ctrl+D)">&#9733; Save</button>
+    <button class="tool-btn" id="btn-history" title="History (Ctrl+H)">&#128340; History</button>
+    <button class="tool-btn" id="btn-downloads" title="Downloads (Ctrl+J)">&#8595; Downloads</button>
   </div>
 
-  <!-- Loading bar -->
   <div id="progress-bar"></div>
 
-  <!-- Webviews -->
   <div id="webviews">
     <div id="newtab-page">
-      <div id="newtab-logo">MyBrowser</div>
-      <div id="newtab-search-wrap">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input id="newtab-search" class="url-bar" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Inter',sans-serif;" type="text" placeholder="Search Google…"/>
+      <div class="newtab-shell">
+        <section class="hero-card">
+          <div class="eyebrow">Browse faster</div>
+          <div id="newtab-logo">Your workspace for calmer browsing.</div>
+          <p class="hero-copy">
+            Search instantly, jump back into saved pages, and keep common tasks close without giving up the lightweight feel of the app.
+          </p>
+
+          <div id="newtab-search-wrap">
+            <span class="search-icon">&#128269;</span>
+            <input id="newtab-search" type="text" placeholder="Search Google or enter a URL" />
+          </div>
+
+          <div id="shortcut-grid"></div>
+        </section>
+
+        <aside class="status-card">
+          <div>
+            <div class="status-title">Session snapshot</div>
+            <p class="status-copy">Bookmarks, recent history, downloads, and open tabs now persist between launches.</p>
+          </div>
+
+          <div class="metric">
+            <span class="metric-value" id="newtab-count">0</span>
+            <span class="metric-label">requests blocked</span>
+          </div>
+
+          <div class="info-row">
+            <span>Saved pages</span>
+            <strong id="bookmark-count">0</strong>
+          </div>
+          <div class="info-row">
+            <span>Quick restore</span>
+            <strong>Enabled</strong>
+          </div>
+          <div class="info-row">
+            <span>Downloads panel</span>
+            <strong>Live updates</strong>
+          </div>
+        </aside>
       </div>
-      <div id="newtab-shortcuts">
-        <div class="shortcut-tile" data-url="https://google.com">    <span class="icon">🔍</span>Google</div>
-        <div class="shortcut-tile" data-url="https://youtube.com">   <span class="icon">▶️</span>YouTube</div>
-        <div class="shortcut-tile" data-url="https://github.com">    <span class="icon">🐙</span>GitHub</div>
-        <div class="shortcut-tile" data-url="https://reddit.com">    <span class="icon">🤖</span>Reddit</div>
-        <div class="shortcut-tile" data-url="https://wikipedia.org"> <span class="icon">📚</span>Wikipedia</div>
-      </div>
-      <div id="newtab-stats">🛡 <span id="newtab-count">0</span> ads &amp; trackers blocked this session</div>
+    </div>
+
+    <div id="side-panels">
+      <section class="side-panel" id="history-panel">
+        <div class="panel-top">
+          <h2>Recent history</h2>
+          <button class="panel-clear" id="clear-history" type="button">Clear</button>
+        </div>
+        <p class="panel-empty" id="history-empty">Pages you visit will appear here.</p>
+        <div class="panel-list" id="history-list"></div>
+      </section>
+
+      <section class="side-panel" id="downloads-panel">
+        <div class="panel-top">
+          <h2>Downloads</h2>
+          <button class="panel-clear" id="clear-downloads" type="button">Clear</button>
+        </div>
+        <p class="panel-empty" id="downloads-empty">Downloaded files and live progress will show up here.</p>
+        <div class="panel-list" id="downloads-list"></div>
+      </section>
     </div>
   </div>
 
