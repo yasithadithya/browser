@@ -69,6 +69,11 @@ const clearDownloadsBtn = document.getElementById('clear-downloads');
   pollBlockedCount();
 })();
 
+/**
+ * Load a JSON array stored at the given localStorage key, returning an empty array if the value is missing, not an array, or JSON parsing fails.
+ * @param {string} key - The localStorage key to read.
+ * @returns {Array} The parsed array, or an empty array on error.
+ */
 function loadStoredArray(key) {
   try {
     const value = JSON.parse(localStorage.getItem(key) || '[]');
@@ -78,6 +83,12 @@ function loadStoredArray(key) {
   }
 }
 
+/**
+ * Load and parse a JSON value from localStorage for the given key, returning `fallback` when the stored value is missing, null, or cannot be parsed.
+ * @param {string} key - LocalStorage key to read.
+ * @param {*} fallback - Value to return when no valid stored value exists.
+ * @returns {*} The parsed stored value, or `fallback` if the key is absent, the stored value is `null`, or JSON parsing fails.
+ */
 function loadStoredObject(key, fallback) {
   try {
     return JSON.parse(localStorage.getItem(key) || 'null') || fallback;
@@ -86,15 +97,35 @@ function loadStoredObject(key, fallback) {
   }
 }
 
+/**
+ * Persist a value to localStorage under the given key by storing its JSON serialization.
+ * @param {string} key - The storage key to write to.
+ * @param {*} value - The value to serialize and save.
+ */
 function saveStoredValue(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+/**
+ * Generate a unique tab identifier.
+ * @returns {string} A unique tab id string in the format `tab-<timestamp>-<sequence>`.
+ */
 function nextTabId() {
   tabSequence += 1;
   return `tab-${Date.now()}-${tabSequence}`;
 }
 
+/**
+ * Normalize address-bar input into a navigable URL.
+ *
+ * - Returns `about:blank` for empty or whitespace input.
+ * - Returns the input unchanged if it already starts with `http://` or `https://`.
+ * - If the input looks like a domain (contains a dot and no whitespace), prepends `https://`.
+ * - Otherwise, returns a Google search URL for the input.
+ *
+ * @param {string} raw - Raw text entered in the address bar.
+ * @returns {string} The normalized URL to navigate to.
+ */
 function parseInput(raw) {
   const value = (raw || '').trim();
   if (!value) return 'about:blank';
@@ -103,6 +134,11 @@ function parseInput(raw) {
   return `https://www.google.com/search?q=${encodeURIComponent(value)}`;
 }
 
+/**
+ * Determines whether a URL's hostname matches the configured ad-hosts pattern.
+ * @param {string} url - The URL to check.
+ * @returns {boolean} `true` if the URL's hostname matches the ad-hosts regex, `false` otherwise.
+ */
 function isAdUrl(url) {
   try {
     return AD_HOSTS_RE.test(new URL(url).hostname);
@@ -111,11 +147,23 @@ function isAdUrl(url) {
   }
 }
 
+/**
+ * Normalize a URL for display/storage by treating empty values and `about:blank` as an empty string.
+ * @param {string} url - The URL to normalize.
+ * @returns {string} An empty string when `url` is falsy or `about:blank`, otherwise the original `url`.
+ */
 function normalizeDisplayUrl(url) {
   if (!url || url === 'about:blank') return '';
   return url;
 }
 
+/**
+ * Restore the previous browsing session by recreating tabs and selecting the active tab.
+ *
+ * Reads saved session data (tab URLs and active tab index) and creates a tab for each URL
+ * (falling back to a single `https://google.com` if no saved tabs exist). After creating tabs,
+ * selects the saved active tab index or the first tab when the saved index is invalid.
+ */
 function restoreSession() {
   const saved = loadStoredObject(STORAGE_KEYS.session, null);
   const urls = Array.isArray(saved?.tabs) && saved.tabs.length ? saved.tabs : ['https://google.com'];
@@ -133,6 +181,13 @@ function restoreSession() {
   switchTab(candidateTab?.id);
 }
 
+/**
+ * Persist the current browser session to storage.
+ *
+ * Saves an object containing `tabs` (array of normalized display URLs) and
+ * `activeTabIndex` (the index of the active tab, clamped to zero if not found)
+ * under the session storage key.
+ */
 function persistSession() {
   saveStoredValue(STORAGE_KEYS.session, {
     tabs: tabs.map((tab) => normalizeDisplayUrl(tab.url)),
@@ -140,6 +195,13 @@ function persistSession() {
   });
 }
 
+/**
+ * Create a new browser tab containing a webview, wire its events and UI, and persist the session.
+ * @param {string} [url] - Initial URL or address-bar input; an empty string results in `about:blank`.
+ * @param {Object} [options] - Options for tab creation.
+ * @param {boolean} [options.switchTo=true] - When true (default), switch focus to the new tab; set to false to keep the current tab active.
+ * @returns {string} The newly created tab's id.
+ */
 function createTab(url = '', options = {}) {
   const id = nextTabId();
   const tabUrl = normalizeDisplayUrl(url);
@@ -180,6 +242,12 @@ function createTab(url = '', options = {}) {
   return id;
 }
 
+/**
+ * Attach event handlers to a tab's webview to keep the tab state, UI, and persisted session in sync.
+ *
+ * Registers listeners that update loading state and progress UI, record history, synchronize navigation state and URL/title/favicon, update bookmark and tab elements, block or open external/ad URLs, and persist session changes.
+ * @param {{id: string, webview: Element, title?: string, url?: string, favicon?: string, loading?: boolean}} tab - Tab object containing at minimum an `id` and its `webview` element.
+ */
 function attachWebviewEvents(tab) {
   const { id, webview } = tab;
 
@@ -270,6 +338,14 @@ function attachWebviewEvents(tab) {
   });
 }
 
+/**
+ * Create a tab DOM element for a tab object, wire its click and close handlers, and insert it into the tab bar.
+ *
+ * The created element contains a favicon img, a title span, and a close button. Clicking the tab (except the close button)
+ * activates the tab; clicking the close button closes it. The element is inserted into `tabBar` before `newTabBtn`.
+ *
+ * @param {{id: string}} tab - Tab object whose `id` is used as the element's `data-tab-id` and for event handlers.
+ */
 function buildTabElement(tab) {
   const tabEl = document.createElement('div');
   tabEl.className = 'tab';
@@ -294,6 +370,15 @@ function buildTabElement(tab) {
   tabBar.insertBefore(tabEl, newTabBtn);
 }
 
+/**
+ * Update the tab bar entry’s title and favicon for the tab with the given id.
+ *
+ * Updates the DOM .tab element's title text using the tab's title or, if missing,
+ * the normalized display URL or "New Tab". Sets the favicon image src when available
+ * and hides the favicon element when not. If the tab or its DOM element is not found,
+ * the function is a no-op.
+ * @param {string} id - Identifier of the tab to refresh in the tab bar.
+ */
 function updateTabEl(id) {
   const tab = tabs.find((item) => item.id === id);
   const tabEl = document.querySelector(`.tab[data-tab-id="${id}"]`);
@@ -309,6 +394,12 @@ function updateTabEl(id) {
   }
 }
 
+/**
+ * Make the tab with the given id the active tab in the UI.
+ *
+ * Updates which webview is visible and which tab element is marked active, synchronizes the active-tab UI state, and persists the session.
+ * @param {string} id - Identifier of the tab to activate.
+ */
 function switchTab(id) {
   activeTabId = id;
 
@@ -322,6 +413,15 @@ function switchTab(id) {
   persistSession();
 }
 
+/**
+ * Update the UI to reflect the specified tab's state.
+ *
+ * If the tab has no URL or is `about:blank`, shows the new tab page and clears the URL/security UI;
+ * otherwise hides the new tab page and updates the URL/security UI for the tab's URL.
+ * Also synchronizes navigation controls, bookmark button state, and the reload button.
+ *
+ * @param {string} id - The id of the tab whose UI should be synchronized.
+ */
 function syncActiveTabUi(id) {
   const tab = tabs.find((item) => item.id === id);
   if (!tab) return;
@@ -341,6 +441,10 @@ function syncActiveTabUi(id) {
   updateReloadButton();
 }
 
+/**
+ * Close and remove the tab with the given id, update closed-tab history, and adjust the active tab/session accordingly.
+ * @param {string} id - The id of the tab to close; if no matching tab exists the function is a no-op.
+ */
 function closeTab(id) {
   const index = tabs.findIndex((tab) => tab.id === id);
   if (index === -1) return;
@@ -369,6 +473,11 @@ function closeTab(id) {
   persistSession();
 }
 
+/**
+ * Reopens the most recently closed tab by creating a new tab using its stored URL.
+ *
+ * If the stored entry has no URL, a blank tab is created. If there are no closed tabs saved, the function does nothing.
+ */
 function reopenClosedTab() {
   const previous = closedTabs.shift();
   if (previous) {
@@ -376,15 +485,32 @@ function reopenClosedTab() {
   }
 }
 
+/**
+ * Displays the new tab page and focuses its search input.
+ *
+ * Focus is applied shortly after the page is shown to ensure the input is ready.
+ */
 function showNewTabPage() {
   newtabEl.classList.add('active');
   setTimeout(() => newtabSearch.focus(), 60);
 }
 
+/**
+ * Hides the new tab page.
+ */
 function hideNewTabPage() {
   newtabEl.classList.remove('active');
 }
 
+/**
+ * Update the address bar value and set the security indicator text and color based on the URL scheme.
+ * 
+ * Sets the URL input's value to the provided string. If the URL starts with "https://", the security
+ * indicator is set to "Secure" and colored with `var(--secure)`. If it starts with "http://", the
+ * indicator is set to "Warning" and colored with `var(--warn)`. For any other value the indicator
+ * is set to "Site" and its color is cleared.
+ * @param {string} url - The display URL to show in the address bar.
+ */
 function updateURLBar(url) {
   urlBar.value = url;
   if (url.startsWith('https://')) {
@@ -399,14 +525,32 @@ function updateURLBar(url) {
   }
 }
 
+/**
+ * Retrieve the currently active tab object.
+ * @returns {{id: string, webview: HTMLElement, title: string, url: string, favicon?: string, loading: boolean}|null} The active tab object, or `null` if no tab is active.
+ */
 function activeTab() {
   return tabs.find((tab) => tab.id === activeTabId) || null;
 }
 
+/**
+ * Retrieve the webview element belonging to the currently active tab.
+ * @returns {HTMLElement|null} The active tab's webview element, or `null` if no active tab exists.
+ */
 function activeWV() {
   return activeTab()?.webview || null;
 }
 
+/**
+ * Navigate the active tab to a parsed address-bar input or show the new-tab page.
+ *
+ * Parses the provided input (or the URL bar value when omitted) and navigates the currently active tab:
+ * - If the parsed URL is `about:blank`, resets the tab to a new-tab state and shows the new-tab page.
+ * - Otherwise, hides the new-tab page, sets the tab's URL and webview src, and updates the URL/security UI.
+ * The function also persists the session, updates bookmark UI state, and blurs the URL bar.
+ *
+ * @param {string} [rawUrl] - Optional raw address-bar input; when omitted the current URL bar value is used.
+ */
 function navigate(rawUrl) {
   const url = parseInput(rawUrl || urlBar.value);
   const tab = activeTab();
@@ -432,10 +576,19 @@ function navigate(rawUrl) {
   urlBar.blur();
 }
 
+/**
+ * Open the browser home page in the active tab.
+ */
 function goHome() {
   navigate('');
 }
 
+/**
+ * Update the enabled/disabled state of the back and forward navigation buttons to reflect
+ * whether the currently active webview can navigate backward or forward.
+ *
+ * If there is no active webview or querying its navigation state throws, both buttons are disabled.
+ */
 function syncNavigationState() {
   const webview = activeWV();
   if (!webview) {
@@ -453,11 +606,26 @@ function syncNavigationState() {
   }
 }
 
+/**
+ * Update the navigation reload button to reflect the active tab's loading state.
+ *
+ * Sets the button icon to a stop symbol (`✕`) when the active tab is loading, and to a reload symbol (`↻`) otherwise.
+ */
 function updateReloadButton() {
   const tab = activeTab();
   navReloadBtn.innerHTML = tab?.loading ? '&#10005;' : '&#8635;';
 }
 
+/**
+ * Add the given tab's current page to the in-memory and persisted history list.
+ *
+ * If the tab's URL is an HTTP(S) address, the function removes any existing entry
+ * with the same URL, prepends a new history entry containing `url`, `title`, and
+ * `visitedAt` (current timestamp), truncates the list to `MAX_HISTORY_ITEMS`,
+ * saves it to storage, and re-renders the history panel.
+ *
+ * @param {{url?: string, title?: string}} tab - Tab object whose `url` and optional `title` will be recorded.
+ */
 function recordHistory(tab) {
   if (!tab.url || !/^https?:\/\//i.test(tab.url)) return;
 
@@ -472,6 +640,14 @@ function recordHistory(tab) {
   renderHistoryPanel();
 }
 
+/**
+ * Render the homepage shortcut tiles from saved bookmarks or default shortcuts.
+ *
+ * Builds and inserts a button tile for each bookmark (up to the configured maximum);
+ * if there are no bookmarks, renders the predefined default shortcut set. Each tile
+ * receives a click handler that navigates to its URL. Also updates the visible
+ * bookmark count badge to reflect the total number of saved bookmarks.
+ */
 function renderShortcutTiles() {
   const bookmarkTiles = bookmarksState
     .slice(0, MAX_BOOKMARK_TILES)
@@ -501,6 +677,11 @@ function renderShortcutTiles() {
   bookmarkBadge.textContent = `${bookmarksState.length}`;
 }
 
+/**
+ * Derives a short, display-friendly title from a URL's hostname.
+ * @param {string} url - The input URL string.
+ * @returns {string} The hostname with a leading `www.` removed (e.g., "example.com"), or `"Saved page"` if the input cannot be parsed as a URL.
+ */
 function shortTitleFromUrl(url) {
   try {
     return new URL(url).hostname.replace(/^www\./, '');
@@ -509,6 +690,14 @@ function shortTitleFromUrl(url) {
   }
 }
 
+/**
+ * Toggle the bookmark state for the currently active tab's page.
+ *
+ * If the active tab's URL uses the `http` or `https` scheme, this will remove
+ * the bookmark if it already exists or add a new bookmark with `url`, `title`,
+ * and `addedAt` timestamp. The bookmarks are persisted to storage and the
+ * bookmark UI (shortcut tiles and bookmark button state) is updated.
+ */
 function toggleBookmark() {
   const tab = activeTab();
   if (!tab?.url || !/^https?:\/\//i.test(tab.url)) return;
@@ -529,6 +718,13 @@ function toggleBookmark() {
   updateBookmarkState();
 }
 
+/**
+ * Update the bookmark button UI to reflect whether the active tab's URL is saved.
+ *
+ * Sets the button's active state and label to "Saved" or "Save" based on whether
+ * the active tab's URL exists in bookmarksState, and disables the button when
+ * there is no valid http(s) URL for the active tab.
+ */
 function updateBookmarkState() {
   const tab = activeTab();
   const bookmarked = !!tab?.url && bookmarksState.some((item) => item.url === tab.url);
@@ -537,6 +733,12 @@ function updateBookmarkState() {
   bookmarkBtn.disabled = !tab?.url || !/^https?:\/\//i.test(tab.url);
 }
 
+/**
+ * Populate the history side panel with clickable entries from the stored history.
+ *
+ * Creates a button for each entry showing the page title (or a short hostname) and a relative
+ * visit time; clicking an entry navigates to that URL and closes the side panel.
+ */
 function renderHistoryPanel() {
   historyList.innerHTML = '';
   historyEmpty.hidden = historyState.length > 0;
@@ -557,6 +759,15 @@ function renderHistoryPanel() {
   });
 }
 
+/**
+ * Insert or update a download record in the downloads state, persist it, and refresh the downloads UI.
+ *
+ * The provided `download` is merged with any existing record with the same `id`; the merged record's
+ * `updatedAt` is set to the current time. The downloads list is then sorted by newest `updatedAt`,
+ * truncated to the configured maximum, saved to storage, and the downloads panel is re-rendered.
+ *
+ * @param {{id: string, [filePath]: string, [state]: string, [receivedBytes]: number, [totalBytes]: number, [name]: string, [updatedAt]?: number}} download - Download payload to upsert; must include `id`.
+ */
 function upsertDownload(download) {
   const existingIndex = downloadsState.findIndex((item) => item.id === download.id);
   const nextItem = {
@@ -579,6 +790,11 @@ function upsertDownload(download) {
   renderDownloadsPanel();
 }
 
+/**
+ * Rebuilds the downloads panel UI from the current downloads state.
+ *
+ * Clears the downloads list, shows or hides the empty placeholder based on whether there are downloads, and for each download creates a card that shows the file name, download state, a visual progress bar, and human-readable received/total byte counts. Each card's "Open" and "Folder" buttons invoke the corresponding window.electronAPI methods with the item's file path.
+ */
 function renderDownloadsPanel() {
   downloadsList.innerHTML = '';
   downloadsEmpty.hidden = downloadsState.length > 0;
@@ -613,12 +829,23 @@ function renderDownloadsPanel() {
   });
 }
 
+/**
+ * Subscribes to download events emitted by the renderer preload API.
+ *
+ * When a download event is received, the registered handler updates the persisted downloads list and its UI representation.
+ */
 function hookDownloadEvents() {
   window.electronAPI.onDownloadEvent((payload) => {
     upsertDownload(payload);
   });
 }
 
+/**
+ * Toggle the side panel UI between closed, the history panel, or the downloads panel.
+ *
+ * Updates which panel is visible and sets the corresponding sidebar button active; requesting the currently open panel closes it.
+ * @param {'history'|'downloads'|null} name - Panel to open; use `null` to close all panels.
+ */
 function togglePanel(name) {
   openPanel = openPanel === name ? null : name;
   historyPanel.classList.toggle('active', openPanel === 'history');
@@ -628,18 +855,31 @@ function togglePanel(name) {
   downloadsBtn.classList.toggle('active', openPanel === 'downloads');
 }
 
+/**
+ * Clears all recorded browsing history, persists the empty history to storage, and refreshes the history panel UI.
+ */
 function clearHistory() {
   historyState = [];
   saveStoredValue(STORAGE_KEYS.history, historyState);
   renderHistoryPanel();
 }
 
+/**
+ * Remove all recorded downloads and update persistent storage.
+ *
+ * Clears the in-memory downloads list, saves the empty list to localStorage under the downloads key, and re-renders the downloads panel UI.
+ */
 function clearDownloads() {
   downloadsState = [];
   saveStoredValue(STORAGE_KEYS.downloads, downloadsState);
   renderDownloadsPanel();
 }
 
+/**
+ * Format a past timestamp as a short relative time string.
+ * @param {number} timestamp - Milliseconds since the Unix epoch representing the past time.
+ * @returns {string} Relative time: `just now`, `Xm ago` (minutes), `Xh ago` (hours), or `Xd ago` (days).
+ */
 function formatRelativeTime(timestamp) {
   const deltaMs = Date.now() - timestamp;
   const minutes = Math.floor(deltaMs / 60000);
@@ -651,6 +891,11 @@ function formatRelativeTime(timestamp) {
   return `${days}d ago`;
 }
 
+/**
+ * Convert a byte count into a human-readable string using 1024-based units.
+ * @param {number} bytes - Number of bytes to format.
+ * @returns {string} Human-readable representation using `B`, `KB`, `MB`, or `GB` (e.g. `0 B`, `512 B`, `1.2 KB`, `150 MB`).
+ */
 function formatBytes(bytes) {
   if (!bytes) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];
@@ -748,6 +993,14 @@ document.addEventListener('keydown', (event) => {
 
 window.addEventListener('beforeunload', persistSession);
 
+/**
+ * Periodically retrieves the number of blocked requests and updates the UI badge and counters.
+ *
+ * Fetches the blocked count from window.electronAPI.getBlockedCount(), updates `blockedEl` and
+ * `newtabCount` with a localized number, and toggles the `#shield-badge` `.active` class when the
+ * count is greater than zero. Any errors from the fetch are ignored. The function reschedules
+ * itself to run again after 2000 milliseconds.
+ */
 async function pollBlockedCount() {
   try {
     const count = await window.electronAPI.getBlockedCount();
