@@ -41,6 +41,12 @@ type ShortcutTile = {
   icon: ComponentProps<typeof MaterialIcons>['name'];
 };
 
+/**
+ * Parse a JSON string and return it only if it is an array; otherwise return an empty array.
+ *
+ * @param value - The stored JSON string (or `null`) to parse
+ * @returns The parsed array of `T` if parsing succeeds and the value is an array; otherwise an empty array
+ */
 function parseStoredArray<T>(value: string | null): T[] {
   if (!value) return [];
   try {
@@ -51,6 +57,12 @@ function parseStoredArray<T>(value: string | null): T[] {
   }
 }
 
+/**
+ * Parse a stored session JSON string and return a validated BrowserSession.
+ *
+ * @param value - The raw JSON string retrieved from storage, or `null`
+ * @returns The parsed `BrowserSession` if `value` contains valid JSON with a `tabs` array, `null` otherwise
+ */
 function parseStoredSession(value: string | null): BrowserSession | null {
   if (!value) return null;
   try {
@@ -62,6 +74,13 @@ function parseStoredSession(value: string | null): BrowserSession | null {
   }
 }
 
+/**
+ * Creates a BrowserTab initialized for a new or restored tab with a normalized URL and default navigation/loading state.
+ *
+ * @param id - Unique identifier for the tab.
+ * @param url - Initial URL or raw input for the tab; may be empty to represent a new tab.
+ * @returns The initialized BrowserTab with a normalized `url`, a derived `title` (falls back to `"New Tab"`), `canGoBack`/`canGoForward` set to `false`, `loading` set to `false`, and `progress` set to `0`.
+ */
 function makeTab(id: string, url: string): BrowserTab {
   const normalized = normalizeUrl(url);
   return {
@@ -75,6 +94,12 @@ function makeTab(id: string, url: string): BrowserTab {
   };
 }
 
+/**
+ * Renders the in-app tabbed browser screen, including the address bar, tab strip, navigation controls,
+ * layered WebViews, new-tab page with shortcuts, and bookmark/history management.
+ *
+ * @returns The React element representing the browser screen UI.
+ */
 export default function BrowserScreen() {
   const params = useLocalSearchParams<{ open?: string | string[]; t?: string | string[] }>();
 
@@ -474,6 +499,14 @@ export default function BrowserScreen() {
   );
 }
 
+/**
+ * Renders a touchable icon button used for navigation controls.
+ *
+ * @param icon - The MaterialIcons glyph name to display.
+ * @param onPress - Callback invoked when the button is pressed.
+ * @param disabled - If `true`, applies disabled styling and prevents presses.
+ * @returns The pressable icon button element.
+ */
 function ActionButton({
   icon,
   onPress,
@@ -493,11 +526,23 @@ function ActionButton({
   );
 }
 
+/**
+ * Create a unique tab identifier and increment the provided counter.
+ *
+ * @param counterRef - Mutable object with a `current` number that will be incremented to help ensure uniqueness
+ * @returns The generated identifier string in the form `tab-<timestamp>-<counter>`
+ */
 function nextTabId(counterRef: { current: number }): string {
   counterRef.current += 1;
   return `tab-${Date.now()}-${counterRef.current}`;
 }
 
+/**
+ * Extracts a single string parameter from a possibly multi-valued input.
+ *
+ * @param value - A string, an array of strings, or undefined.
+ * @returns The first string if `value` is an array, `value` itself if it's a string, or `''` when `value` is undefined or empty.
+ */
 function getSingleParam(value: string | string[] | undefined): string {
   if (!value) return '';
   return Array.isArray(value) ? value[0] || '' : value;

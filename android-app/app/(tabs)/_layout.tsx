@@ -6,6 +6,14 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+/**
+ * Renders the app's bottom tab navigator with "Browser" and "Library" tabs.
+ *
+ * The tab bar uses the current color scheme for the active tint color, hides header bars,
+ * and uses a haptic-enabled tab button component.
+ *
+ * @returns The React element representing the configured `Tabs` navigator
+ */
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 

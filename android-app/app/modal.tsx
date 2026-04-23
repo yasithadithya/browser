@@ -4,6 +4,11 @@ import { StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
+/**
+ * Render a modal screen with a centered title and a link that returns the user to the home route.
+ *
+ * @returns A React element that displays a title ("This is a modal") and a link ("Go to home screen") which dismisses the modal and navigates to `/`.
+ */
 export default function ModalScreen() {
   return (
     <ThemedView style={styles.container}>
