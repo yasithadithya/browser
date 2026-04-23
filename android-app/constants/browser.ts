@@ -44,6 +44,18 @@ export const DEFAULT_SHORTCUTS = [
   { title: 'Wikipedia', url: 'https://wikipedia.org', icon: 'menu-book' },
 ] as const;
 
+/**
+ * Convert raw user input into a navigable URL or a Google search URL.
+ *
+ * Trims the input and maps it to a proper URL:
+ * - empty input -> `about:blank`
+ * - input starting with `http://` or `https://` -> returned unchanged
+ * - bare domain-like input (contains a dot, no spaces) -> prefixed with `https://`
+ * - otherwise -> converted to a Google search URL with the input URL-encoded
+ *
+ * @param raw - The raw input string provided by the user
+ * @returns A string containing the resulting URL (`about:blank`, a full URL, or a Google search URL)
+ */
 export function parseInput(raw: string): string {
   const value = raw.trim();
   if (!value) return 'about:blank';
@@ -52,6 +64,15 @@ export function parseInput(raw: string): string {
   return `https://www.google.com/search?q=${encodeURIComponent(value)}`;
 }
 
+/**
+ * Derives a short, user-facing title from a URL's hostname.
+ *
+ * Strips a leading `www.` from the hostname and returns it; if the input cannot be parsed
+ * as a URL or the hostname is empty, returns `'Page'`.
+ *
+ * @param url - The URL string to extract a short title from
+ * @returns The hostname without a leading `www.`, or `'Page'` when no valid hostname is available
+ */
 export function shortTitleFromUrl(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, '') || 'Page';
@@ -60,14 +81,29 @@ export function shortTitleFromUrl(url: string): string {
   }
 }
 
+/**
+ * Determines whether a string is an HTTP or HTTPS URL.
+ *
+ * @returns `true` if the string starts with `http://` or `https://` (case-insensitive), `false` otherwise.
+ */
 export function isHttpUrl(url: string): boolean {
   return /^https?:\/\//i.test(url);
 }
 
+/**
+ * Checks whether a URL uses the HTTPS scheme.
+ *
+ * @returns `true` if the URL starts with `https://`, `false` otherwise.
+ */
 export function isSecureUrl(url: string): boolean {
   return /^https:\/\//i.test(url);
 }
 
+/**
+ * Convert the special `about:blank` page identifier to an empty string.
+ *
+ * @returns The empty string if `url` equals `'about:blank'`, otherwise the original `url`.
+ */
 export function normalizeUrl(url: string): string {
   return url === 'about:blank' ? '' : url;
 }

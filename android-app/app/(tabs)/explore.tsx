@@ -7,6 +7,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { type BookmarkEntry, type HistoryEntry, STORAGE_KEYS, shortTitleFromUrl } from '@/constants/browser';
 
+/**
+ * Parse a stored JSON string and return it as an array.
+ *
+ * @param value - The stored string value (JSON) or `null`.
+ * @returns The parsed array when `value` contains a JSON array, otherwise an empty array.
+ */
 function parseStoredArray<T>(value: string | null): T[] {
   if (!value) return [];
   try {
@@ -17,6 +23,12 @@ function parseStoredArray<T>(value: string | null): T[] {
   }
 }
 
+/**
+ * Format a past timestamp as a concise, human-readable relative time string.
+ *
+ * @param timestamp - Time in milliseconds since the Unix epoch to compare against the current time
+ * @returns `'just now'` if less than 1 minute has passed, `'{N}m ago'` if less than 60 minutes, `'{N}h ago'` if less than 24 hours, or `'{N}d ago'` otherwise
+ */
 function formatRelativeTime(timestamp: number): string {
   const deltaMs = Date.now() - timestamp;
   const minutes = Math.floor(deltaMs / 60000);
@@ -28,6 +40,13 @@ function formatRelativeTime(timestamp: number): string {
   return `${days}d ago`;
 }
 
+/**
+ * Render the Library screen showing saved bookmarks and recent browsing history.
+ *
+ * On screen focus it loads persisted bookmarks and history; tapping an entry opens it in the main browser route, and each section's "Clear" button clears the visible list and persists an empty array.
+ *
+ * @returns A JSX element representing the Library screen UI
+ */
 export default function LibraryScreen() {
   const router = useRouter();
   const [bookmarks, setBookmarks] = useState<BookmarkEntry[]>([]);
