@@ -8,6 +8,8 @@ const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 app.userAgentFallback = CHROME_UA;
 
 let mainWindow;
+const APP_USER_MODEL_ID = 'com.mybrowser.app';
+const APP_ICON_PATH = path.join(__dirname, 'icon.ico');
 
 function sendToRenderer(channel, payload) {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -57,6 +59,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 500,
     frame: false,
+    icon: APP_ICON_PATH,
     backgroundColor: '#0d0d14',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -109,7 +112,10 @@ ipcMain.handle('show-download-in-folder', (_event, filePath) => {
 });
 
 // ─── App lifecycle ────────────────────────────────────────────────────────────
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  app.setAppUserModelId(APP_USER_MODEL_ID);
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

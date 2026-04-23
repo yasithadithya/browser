@@ -498,7 +498,7 @@ function renderShortcutTiles() {
     shortcutGrid.appendChild(tile);
   });
 
-  bookmarkBadge.textContent = `${bookmarksState.length}`;
+  if (bookmarkBadge) bookmarkBadge.textContent = `${bookmarksState.length}`;
 }
 
 function shortTitleFromUrl(url) {
@@ -752,7 +752,7 @@ async function pollBlockedCount() {
   try {
     const count = await window.electronAPI.getBlockedCount();
     blockedEl.textContent = count.toLocaleString();
-    newtabCount.textContent = count.toLocaleString();
+    if (newtabCount) newtabCount.textContent = count.toLocaleString();
     document.getElementById('shield-badge').classList.toggle('active', count > 0);
   } catch (_error) {
     // Ignore polling errors while the window is closing.

@@ -337,52 +337,36 @@
       position: absolute; inset: 0;
       display: none; align-items: center; justify-content: center;
       padding: 40px;
-      background: radial-gradient(circle at top right, rgba(0, 122, 255, 0.1), transparent 40%), var(--bg);
+      background: var(--bg);
     }
     #newtab-page.active { display: flex; }
 
-    .newtab-shell {
-      width: 100%; max-width: 900px;
-      display: grid; grid-template-columns: 1.5fr 1fr;
-      gap: 30px;
+    .newtab-minimal {
+      width: 100%; max-width: 600px;
+      display: flex; flex-direction: column; gap: 32px;
+      align-items: center;
     }
 
-    .hero-card, .status-card, .side-panel {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px;
-      backdrop-filter: blur(20px);
-      box-shadow: var(--shadow);
-    }
-
-    .hero-card { display: flex; flex-direction: column; gap: 24px; }
-    
-    .eyebrow {
-      font-size: 13px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--accent);
-    }
-
-    #newtab-logo { font-size: 48px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
-    .hero-copy { color: var(--muted); font-size: 16px; line-height: 1.6; }
+    #newtab-logo { font-size: 48px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; color: var(--text); }
 
     #newtab-search-wrap {
       display: flex; align-items: center; gap: 14px;
       height: 56px; padding: 0 20px;
-      border-radius: 16px;
-      background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border);
+      width: 100%;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
       transition: all 0.2s;
     }
     #newtab-search-wrap:focus-within {
-      border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); background: rgba(0, 0, 0, 0.4);
+      border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); background: rgba(255, 255, 255, 0.08);
     }
     .search-icon {
       font-size: 20px; color: var(--muted);
     }
 
     #shortcut-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 16px;
-      margin-top: 10px;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;
+      margin-top: 10px; width: 100%;
     }
 
     .shortcut-tile {
@@ -404,20 +388,6 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     .shortcut-label { font-size: 13px; font-weight: 500; text-align: center; }
-
-    .status-card { display: flex; flex-direction: column; gap: 24px; }
-    .status-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-    .status-copy { color: var(--muted); font-size: 14px; line-height: 1.5; }
-    
-    .metric { margin: 16px 0; }
-    .metric-value { font-size: 48px; font-weight: 700; color: var(--text); }
-    .metric-label { display: block; color: var(--accent); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
-    
-    .info-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding-top: 16px; border-top: 1px solid var(--border); font-size: 14px;
-    }
-    .info-row strong { color: var(--text); }
 
     #side-panels {
       position: absolute; top: 16px; right: 16px; bottom: 16px;
@@ -460,10 +430,6 @@
     .download-header { display: flex; justify-content: space-between; align-items: center; }
     .download-progress-track { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
     .download-progress-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
-
-    @media (max-width: 900px) {
-      .newtab-shell { grid-template-columns: 1fr; }
-    }
   </style>
 </head>
 <body>
@@ -502,46 +468,15 @@
 
   <div id="webviews">
     <div id="newtab-page">
-      <div class="newtab-shell">
-        <section class="hero-card">
-          <div class="eyebrow">Browse faster</div>
-          <div id="newtab-logo">Your workspace for calmer browsing.</div>
-          <p class="hero-copy">
-            Search instantly, jump back into saved pages, and keep common tasks close without giving up the lightweight feel of the app.
-          </p>
+      <div class="newtab-minimal">
+        <div id="newtab-logo">MyBrowser</div>
+        
+        <div id="newtab-search-wrap">
+          <span class="search-icon">&#128269;</span>
+          <input id="newtab-search" type="text" placeholder="Search the web or enter a URL" />
+        </div>
 
-          <div id="newtab-search-wrap">
-            <span class="search-icon">&#128269;</span>
-            <input id="newtab-search" type="text" placeholder="Search Google or enter a URL" />
-          </div>
-
-          <div id="shortcut-grid"></div>
-        </section>
-
-        <aside class="status-card">
-          <div>
-            <div class="status-title">Session snapshot</div>
-            <p class="status-copy">Bookmarks, recent history, downloads, and open tabs now persist between launches.</p>
-          </div>
-
-          <div class="metric">
-            <span class="metric-value" id="newtab-count">0</span>
-            <span class="metric-label">requests blocked</span>
-          </div>
-
-          <div class="info-row">
-            <span>Saved pages</span>
-            <strong id="bookmark-count">0</strong>
-          </div>
-          <div class="info-row">
-            <span>Quick restore</span>
-            <strong>Enabled</strong>
-          </div>
-          <div class="info-row">
-            <span>Downloads panel</span>
-            <strong>Live updates</strong>
-          </div>
-        </aside>
+        <div id="shortcut-grid"></div>
       </div>
     </div>
 
